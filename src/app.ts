@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import productRoutes from './routes/product.routes';
 
 const app = express();
 
@@ -12,5 +13,7 @@ app.get('/api/health', (_req, res) => {
         message: 'API is running',
     });
 });
+
+app.use('/api/products', productRoutes);
 
 export default app;
