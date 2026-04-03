@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import productRoutes from './routes/product.routes';
 import orderRoutes from './routes/order.routes';
+import aiRoutes from './routes/ai.routes';
 
 const app = express();
 
@@ -18,5 +19,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/products', productRoutes);
 
 app.use('/api/orders', orderRoutes);
+
+app.use('/api/ai', aiRoutes);
 
 export default app;
