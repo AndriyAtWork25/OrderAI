@@ -42,44 +42,59 @@ export const parseOrderWithAI = async (
   }
 };
 
-// Diese Funktion geht einen Schritt weiter:
-// 1. Nachricht an AI schicken
-// 2. AI-Output gegen unser Order-Schema validieren
-// 3. Bestell-Datensatz in MongoDB speichern
 export const processOrderWithAI = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    // Request-Body lesen
-    const requestData = req.body;
+    // Input validieren
+    const validatedInput = parseOrderSchema.parse(req.body);
 
-    // Nur die eingehende Nachricht validieren
-    const validatedInput = parseOrderSchema.parse(requestData);
-
-    // Nachricht durch das LLM parsen lassen
+    // AI Parsing
     const parsedOrder = await parseOrderMessage(validatedInput.message);
 
-    // Sehr wichtig:
-    // Jetzt prüfen wir, ob das AI-Ergebnis wirklich
-    // zu unserem Order-Datenmodell passt.
+    // Alle Items prüfen
+    const checkResults = [];
+
+    for (const item of parsedOrder.items) {
+      const result = await matchProductVariantAndCheckStock(item);
+      checkResults.push({ item, result });
+    }
+
+    // Prüfen ob alle Items gültig sind
+    const hasError = checkResults.some(
+      (r) => !r.result.matched || r.result.inStock === false
+    );
+
+    // Wenn Fehler → KEIN speichern
+    if (hasError) {
+       res.status(400).json({
+        success: false,
+        message: 'Order cannot be processed',
+        data: {
+          parsedOrder,
+          checks: checkResults,
+        },
+      });
+      return;
+    }
+
+    // Wenn alles passt → validieren
     const validatedOrderData = orderSchema.parse(parsedOrder);
 
-    // Wenn alles passt, speichern wir die Order in MongoDB.
+    // Order speichern
     const newOrder = await Order.create(validatedOrderData);
 
-    // Erfolgsantwort mit der gespeicherten Order
+    // Erfolgsantwort
     res.status(201).json({
       success: true,
       message: 'Order processed and saved successfully',
-      data: newOrder,
+      data: {
+        order: newOrder,
+        checks: checkResults,
+      },
     });
   } catch (error) {
-    // Fehler kann kommen von:
-    // - parseOrderSchema
-    // - OpenAI Request
-    // - orderSchema
-    // - MongoDB save
     res.status(400).json({
       success: false,
       message: 'Failed to process order with AI',
