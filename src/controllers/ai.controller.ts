@@ -3,7 +3,7 @@ import { parseOrderSchema } from '../schemas/ai.schema';
 import { parseOrderMessage } from '../services/llm.service';
 import { orderSchema } from '../schemas/order.schema';
 import Order from '../models/order.model';
-
+import { matchProductVariantAndCheckStock } from '../services/product-matching.service';
 
 // Controller für den AI Parse Endpoint.
 //
@@ -83,6 +83,51 @@ export const processOrderWithAI = async (
     res.status(400).json({
       success: false,
       message: 'Failed to process order with AI',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};
+
+// Diese Funktion:
+// 1. parst die Nachricht mit AI
+// 2. prüft jedes Item gegen die Produkt-Datenbank
+// 3. gibt Matching + Stock Info zurück (ohne speichern)
+export const checkOrderWithAI = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    // Input validieren
+    const validatedInput = parseOrderSchema.parse(req.body);
+
+    // AI Parsing
+    const parsedOrder = await parseOrderMessage(validatedInput.message);
+
+    // Für jedes Item Matching durchführen
+    const results = [];
+
+    for (const item of parsedOrder.items) {
+      const matchResult = await matchProductVariantAndCheckStock(item);
+
+      results.push({
+        item,
+        matchResult,
+      });
+    }
+
+    // Ergebnis zurückgeben
+    res.status(200).json({
+      success: true,
+      message: 'Order checked successfully',
+      data: {
+        parsedOrder,
+        checks: results,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: 'Failed to check order',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }

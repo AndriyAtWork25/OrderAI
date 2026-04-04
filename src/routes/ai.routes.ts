@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseOrderWithAI, processOrderWithAI, } from '../controllers/ai.controller';
+import { parseOrderWithAI, processOrderWithAI, checkOrderWithAI, } from '../controllers/ai.controller';
 
 // Router für AI-bezogene Endpunkte
 const router = Router();
@@ -11,5 +11,7 @@ router.post('/parse-order', parseOrderWithAI);
 // POST /api/ai/process-order
 // Analysieren + als Order speichern
 router.post('/process-order', processOrderWithAI);
+
+router.post('/check-order', checkOrderWithAI);
 
 export default router;
