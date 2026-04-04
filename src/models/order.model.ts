@@ -49,7 +49,7 @@ const orderSchema = new Schema(
     customerType: {
         type: String,
         required: true,
-        enum: ['b2b', 'b2c'],
+        enum: ['b2b', 'b2c', 'unknown'],
     },
 
     originalMessage: {

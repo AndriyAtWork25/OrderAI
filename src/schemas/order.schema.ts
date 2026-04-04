@@ -27,7 +27,7 @@ export const orderSchema = z.object({
     .min(2, 'Customer name must be at least 2 characters long'),
      
     // Kundentyp muss entweder 'b2b' oder 'b2c' sein.
-    customerType: z.enum(['b2b', 'b2c']),
+    customerType: z.enum(['b2b', 'b2c', 'unknown']),
         originalMessage: z
         .string()
         .min(5, 'Original message must be at least 5 characters long'),

@@ -16,7 +16,7 @@ export interface OrderData {
 
     // B2B = Händler / Verein / Firma
     // B2C = Endkunde
-    customerType: 'b2b' | 'b2c';
+    customerType: 'b2b' | 'b2c' | 'unknown';
 
     originalMessage: string;
 
